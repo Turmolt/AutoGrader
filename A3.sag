@@ -1,0 +1,9 @@
+=0
+*[A1] Check1 [IF] (Did not use IF function in cell A1) -3
+**[A1] Check1 [AND] (Did not use AND function in cell A1) -3
+[A2] Check2 [IF] (Did not use nested IF function in cell A2) -3
+[A3] Check3 [IF] (Did not use nested IF function in cell A3) -3
+*[A5] Check1 [IF] (Did not use IF function in cell A5) -3
+**[A6] Check1 [AND] (Did not use AND function in cell A6) -3
+**[A7] Check1 [AND] (Did not use AND function in cell A7) -3
+**[A8] Check1 [AND] (Did not use AND function in cell A8) -3

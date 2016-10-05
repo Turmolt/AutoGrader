@@ -2,30 +2,148 @@
 from openpyxl import Workbook
 from openpyxl import cell
 from openpyxl import load_workbook
+import re
 import os
 
 class AutoGrader:
 
     def main(self):
 
-        self.Assignment = input('Enter Assignment Folder: ')
+        #self.Assignment = input('Enter Assignment Folder: ')
+
+        self.keyFile = input('Enter key file name: ') + '.sag'
+
+        self.assSyntax=[]
+        self.readAssignmentKey(self.keyFile)
+        print(self.assSyntax)
 
         #gF = Graded File, the file we write the output to
-        self.gF = open(self.Assignment+'Graded.txt','w')
-
-        for file in os.listdir(self.Assignment):
-            if file.endswith(".xlsx"):
-                print(self.Assignment+'/'+file.__str__())
-                try:
-                    self.gradePaper(self.Assignment+'/'+file.__str__())
-                except:
-                    print(file.__str__()+' had an error, OOPS')
-                    self.gF.write('error\n\n')
-
-        self.gF.close()
+        #self.gF = open(self.Assignment+'Graded.txt','w')
+        #self.gF.close()
 
 
-    def gradePaper(self,title):
+        # for file in os.listdir(self.Assignment):
+        #     if file.endswith(".xlsx"):
+        #         print(self.Assignment+'/'+file.__str__())
+        #         try:
+        #             self.gradePaperHARDCODED(self.Assignment+'/'+file.__str__())
+        #         except:
+        #             print(file.__str__()+' had an error, OOPS')
+        #             self.gF.write('error\n\n')
+
+
+
+    #State 0 = Start new Sheet
+    #State 1 = Check for New Question
+    #State 2 = Read single statement in, fall back to S1
+    #State 3 = Read multiple statements in, fall back to S1 when Question ends
+    #State 4 = The 'read in statement' section
+
+    def readAssignmentKey(self,keyPath):
+        assKey=open(keyPath,'r')
+
+        lines = [line.rstrip('\n') for line in assKey]
+
+        curSheet = 0
+        state = 0
+        statementNumber = 0
+
+        newStatement = ['',0,'','',0]
+        newQuestion = []
+
+        multConditions = False
+
+        for i in range(0,lines.__len__()):
+
+            # Get the current character we are parsing
+            c = lines[i]
+            curChar = 0
+
+            #############################################################
+            if state == 0:
+                if c[0] == '#':
+                    # Skip Line, continue because this is a comment
+                    continue
+                elif c[0] == '=':
+                    curSheet = int(c[1])
+                    self.assSyntax.append([])
+                    state = 1
+
+            #############################################################
+            elif state == 1:
+                if c[0] == '*':
+                    print('Start Multiple Condition Statement')
+                    newQuestion = []
+                    state = 3
+                elif c[0] == '[':
+                    newQuestion = []
+                    state = 2
+                else:
+                    print('Error on line '+i.__str__()+'), stuck in state 1')
+
+            #############################################################
+            if state == 2:
+                parsedLine = re.split(' ',c)
+
+                newStatement = self.readStatement(parsedLine)
+                newQuestion=[newStatement]
+
+                self.assSyntax[curSheet].append(newQuestion)
+                state = 1
+
+            #############################################################
+            elif state == 3:
+                parsedLine = re.split(' ',c)
+                if parsedLine[0].startswith('*[') and not multConditions:
+                    multConditions = True
+                    parsedLine[0]=parsedLine[0].replace('*','')
+                    newQuestion.append(self.readStatement(parsedLine))
+
+                elif parsedLine[0].startswith('**[') and multConditions:
+                    parsedLine[0]=parsedLine[0].replace('**','')
+                    newQuestion.append(self.readStatement(parsedLine))
+
+                else:
+                    print('End Multiple Condition Statement')
+                    multConditions = False
+                    self.assSyntax[curSheet].append(newQuestion)
+                    state = 1
+
+            if i == lines.__len__()-1 and multConditions:
+                self.assSyntax[curSheet].append(newQuestion)
+
+
+
+    def readStatement(self,parsedLine):
+        newStatement = ['',0,'','',0]
+
+        newStatement[0] = parsedLine[0][1:-1]
+        print(newStatement[0])
+        newStatement[1] = int(parsedLine[1][-1])
+        print(newStatement[1])
+        newStatement[2] = parsedLine[2][1:-1]
+        print(newStatement[2])
+
+        commentString = ''
+
+        for i in range(3,parsedLine.__len__()-2):
+            commentString+=parsedLine[i] + ' '
+
+        newStatement [4] = int(parsedLine[-1][-1])
+        print(newStatement[4])
+        commentString = commentString[1:-2] + ' (-'+newStatement[4].__str__()+'pts)'
+        newStatement[3] = commentString
+        print(newStatement[3])
+
+
+        return newStatement
+
+
+
+
+
+
+    def gradePaperHARDCODED(self,title):
         fileName = title.replace(self.Assignment+'/A3 Excel_','')
         fileName = fileName.replace('.xlsx','')
         self.gF.write(fileName+'\n')
