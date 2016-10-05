@@ -1,9 +1,8 @@
 =0
-*[A1] Check1 [IF] (Did not use IF function in cell A1) -3
-**[A1] Check1 [AND] (Did not use AND function in cell A1) -3
-[A2] Check2 [IF] (Did not use nested IF function in cell A2) -3
-[A3] Check3 [IF] (Did not use nested IF function in cell A3) -3
-
-
-[L1] Check1 [COUNTIF] (Did not use COUNTIF function in cell L1) -3
-[K1] Check1 [$G$9] (Did not use $G$9
+*[A1] Check1 [IF] (Did not use IF function in cell A1) -3 {IF AND}
+**[A1] Check1 [AND] (Did not use AND function in cell A1) -3 {IF AND}
+[A2] Check1 [IF] (Did not use nested IF function in cell A2) -3 {IF}
+*[A3] Check1 [IF] (Did not use nested IF function in cell A3) -3 {IF AND}
+**[A3] Check3 [AND] (Did not used AND function 3 times in cell A3) -3 {IF AND}
+[L1] Check1 [COUNTIF] (Did not use COUNTIF function in cell L1) -3 {COUNTIF}
+[K1] Check1 [$G$9] (Did not use absolute reference to $G$9 in cell K1) -2 {$G$9}

@@ -11,58 +11,71 @@ class AutoGrader:
 
         self.Assignment = input('Enter Assignment Folder: ')
         self.keyFile = input('Enter key file name: ') + '.sag'
+
+
         self.aSyntax=[]
         self.readAssignmentKey(self.keyFile)
         for i in range(0, self.aSyntax[0].__len__()):
             print(self.aSyntax[0][i].__str__() + "\n")
 
         #gF = Graded File, the file we write the output to
-        #self.gF = open(self.Assignment+'Graded.txt','w')
-        #self.gF.close()
+        self.gF = open(self.Assignment+'Graded.txt','w')
 
 
-        # for file in os.listdir(self.Assignment):
-        #     if file.endswith(".xlsx"):
-        #         print(self.Assignment+'/'+file.__str__())
-        #         try:
-        #             self.gradePaperHARDCODED(self.Assignment+'/'+file.__str__())
-        #         except:
-        #             print(file.__str__()+' had an error, OOPS')
-        #             self.gF.write('error\n\n')
+        for file in os.listdir(self.Assignment):
+            if file.endswith(".xlsx"):
+                print(self.Assignment+'/'+file.__str__())
+                try:
+                    self.gradePaper(self.Assignment+'/'+file.__str__())
+                except:
+                    print(file.__str__()+' had an error, OOPS')
+                    self.gF.write('error\n\n')
+
+        self.gF.close()
+
+
+
 
     def gradePaper(self,path):
-        fileName = path.replace(self.Assignment+'/A3 Excel_','')
+
+        fileName = path.replace(self.Assignment+'/','')
         fileName = fileName.replace('.xlsx','')
 
-        #self.gF.write(fileName+'\n')
+        self.gF.write(fileName+'\n')
+
         self.awb = load_workbook(path)
         self.asheets = []
         for s in self.awb._sheets:
             self.asheets.append(s)
-
+        print('Start')
         if self.asheets.__len__()>0:
             score = 60
+            print(score.__str__())
             try:
                 #for each sheet
-                for sheetNum in self.aSyntax:
-
+                for sheetNum in range(0,self.aSyntax.__len__()):
                     ws=self.asheets[sheetNum]
 
                     #Go through each question
                     for qNum in range(0,self.aSyntax[sheetNum].__len__()):
-
+                        print(qNum.__str__())
                         curQ = self.aSyntax[sheetNum][qNum]
                         #Check to see if it is a single-condition question, check count if so
                         if curQ.__len__()==1:
 
                             if not self.checkStatement(curQ[0],ws,score):
                                 score-=curQ[4]
+                            print('done')
 
                         elif curQ.__len__()>1:
                             #check each condition, if any fail then we break out of loop and subtract points
                             for i in range(0,curQ.__len__()):
                                 if not self.checkStatement(curQ[i],ws,score):
+                                    print('done')
                                     break
+                                else:
+                                    print('ayeee')
+
             except AttributeError:
                 #self.gF.write('Student left cells blank\n\n\n')
                 print('Student left cells blank')
@@ -72,7 +85,7 @@ class AutoGrader:
             print('~~~~~~~~~~~~~~')
 
     #Check for Statement stmt in worksheet ws
-    def checkStatement(self, stmt, ws, score):
+    def checkStatement(self, stmt, ws, ws2, score):
 
         #parse stmt into useful information
         cellToCheck=stmt[0]
@@ -80,13 +93,16 @@ class AutoGrader:
         valToCheck=stmt[2]
         comment=stmt[3]
         pointVal=stmt[4]
-
+        correctAnswer = stmt[5]
+        print(comment)
         #check the workbook for the desired statement count, fail and subtract score if is less
         if ws[cellToCheck].value.upper().count(valToCheck)<n:
-            #self.gF.write(comment)
-            print(comment)
+            self.gF.write(comment)
+            #print(comment)
             score-=pointVal
             return False
+        elif ws2[cellToCheck].value.upper()!=correctAnswer.upper():
+            print('Answer Wrong')
         else:
             return True
 
@@ -124,12 +140,14 @@ class AutoGrader:
             #############################################################
             elif state == 1:
                 if l[0] == '*':
-                    print('Start Multiple Condition Statement')
+                    #print('Start Multiple Condition Statement')
                     newQuestion = []
                     state = 3
                 elif l[0] == '[':
                     newQuestion = []
                     state = 2
+                elif l[0] == '#':
+                    continue
                 else:
                     print('Error on line '+i.__str__()+'), stuck in state 1')
 
@@ -172,7 +190,7 @@ class AutoGrader:
 
                 #fall out of multi-condition when the line starts with [
                 elif parsedLine[0].startswith('[') and multConditions:
-                    print('End Multiple Condition Statement')
+                    #print('End Multiple Condition Statement')
                     multConditions = False
                     self.aSyntax[curSheet].append(newQuestion)
 
@@ -195,33 +213,35 @@ class AutoGrader:
                         0,  #Operator
                         '', #Value we want to check is in Cell To Check
                         '', #Grader's comment about getting this question condition wrong
-                        0]  #The point value that this question condition is worth
-
+                        0,  #The point value that this question condition is worth
+                        ''] #The correct answer to compare against
         newStatement[0] = parsedLine[0][1:-1]
-        print(newStatement[0])
+        #print(newStatement[0])
 
         #Check operator here
         if 'Check' in parsedLine[1]:
             newStatement[1] = int(parsedLine[1][-1])
-            print(newStatement[1])
+        #    print(newStatement[1])
         else:
             print(parsedLine[1])
 
         newStatement[2] = parsedLine[2][1:-1]
-        print(newStatement[2])
+        #print(newStatement[2])
 
         commentString = ''
 
-        for i in range(3,parsedLine.__len__()-1):
+        for i in range(3,parsedLine.__len__()-2):
             commentString+=parsedLine[i] + ' '
 
-        newStatement [4] = int(parsedLine[-1][-1])
-        print(newStatement[4])
+        newStatement [4] = int(parsedLine[-2][-2])
+#        print(newStatement[4])
 
-        commentString = commentString[1:-2] + ' (-'+newStatement[4].__str__()+'pts)'
+        commentString = commentString[1:-3] + ' (-'+newStatement[4].__str__()+'pts)'
         newStatement[3] = commentString
-        print(newStatement[3])
+#        print(newStatement[3])
+        newStatement[5] = parsedLine[-1]
 
+#        print(newStatement.__str__())
         return newStatement
 
 AG  = AutoGrader()
