@@ -21,8 +21,9 @@ Python program which grades Excel homework built by a lazy TA
 
 #EXAMPLE:
 =0
-*[A1] Check1 [IF] (Did not use IF function in cell A1 -3)
-**[A1] Check1 [AND] (Did not use AND function in cell A1 -3)
+*[A1] Check1 [IF] (Did not use IF function in cell A1) -3
+**[A1] Check1 [AND] (Did not use AND function in cell A1) -3
 
-#Checks if there is 1 or more IF functions AND if there is 1 or more AND functions in cell A1, -3pts if they did not do both
+#Checks if there is 1 or more IF functions AND if there is 1 or more AND functions in cell A1
+#The student will get -3pts if they did not do both and recieve the comment
 ```
