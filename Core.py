@@ -1,15 +1,24 @@
 #author: sam gates
+
+#this is a program built to grade excel papers
+#it is fully featured with its own grammar to easily
+#write new assignments and have them graded in a jiffy!
+
 from openpyxl import Workbook
 from openpyxl import cell
 from openpyxl import load_workbook
 import re
 import os
+import sys
 
 class AutoGrader:
 
     def main(self):
 
+        #ask for assignment folder containing the things to grade
         self.Assignment = input('Enter Assignment Folder: ')
+
+        #ask for the .sag file that we will parse to get our answer key
         self.keyFile = input('Enter key file name: ') + '.sag'
 
 
@@ -28,7 +37,7 @@ class AutoGrader:
                 try:
                     self.gradePaper(self.Assignment+'/'+file.__str__())
                 except:
-                    print(file.__str__()+' had an error, OOPS')
+                    print(file.__str__()+' had an error, OOPS:',sys.exc_info()[0])
                     self.gF.write('error\n\n')
 
         self.gF.close()
@@ -38,16 +47,17 @@ class AutoGrader:
 
     def gradePaper(self,path):
 
+        #loading in the excel sheet
         fileName = path.replace(self.Assignment+'/','')
         fileName = fileName.replace('.xlsx','')
-
         self.gF.write(fileName+'\n')
-
         self.awb = load_workbook(path)
         self.asheets = []
         for s in self.awb._sheets:
             self.asheets.append(s)
-        print('Start')
+#        print('Start')
+
+        #If we have at least one sheet, we drop info the grading loop
         if self.asheets.__len__()>0:
             score = 60
             print(score.__str__())
@@ -60,17 +70,20 @@ class AutoGrader:
                     for qNum in range(0,self.aSyntax[sheetNum].__len__()):
                         print(qNum.__str__())
                         curQ = self.aSyntax[sheetNum][qNum]
+                        print("lol")
                         #Check to see if it is a single-condition question, check count if so
                         if curQ.__len__()==1:
-
+                            print("ayy")
                             if not self.checkStatement(curQ[0],ws,score):
                                 score-=curQ[4]
                             print('done')
 
                         elif curQ.__len__()>1:
+                            print("ayy")
                             #check each condition, if any fail then we break out of loop and subtract points
                             for i in range(0,curQ.__len__()):
-                                if not self.checkStatement(curQ[i],ws,score):
+                                print("ayy2 " + curQ[i].__str__())
+                                if not self.checkStatement(curQ[i],ws,ws,score):
                                     print('done')
                                     break
                                 else:
@@ -86,7 +99,7 @@ class AutoGrader:
 
     #Check for Statement stmt in worksheet ws
     def checkStatement(self, stmt, ws, ws2, score):
-
+        print("Hi")
         #parse stmt into useful information
         cellToCheck=stmt[0]
         n=stmt[1]
@@ -156,7 +169,7 @@ class AutoGrader:
             if state == 2:
 
                 #parse into tokens separated by spaces
-                parsedLine = re.split(' ',l)
+                parsedLine = re.split('_',l)
 
                 newStatement = self.readStatement(parsedLine)
                 newQuestion=[newStatement]
@@ -166,7 +179,7 @@ class AutoGrader:
             #State 3 = Read multiple statements in as a multi-condition, fall back to S1 when Question ends
             #############################################################
             elif state == 3:
-                parsedLine = re.split(' ',l)
+                parsedLine = re.split('_',l)
 
                 #Start of multi-condition
                 if parsedLine[0].startswith('*['):
@@ -228,18 +241,13 @@ class AutoGrader:
         newStatement[2] = parsedLine[2][1:-1]
         #print(newStatement[2])
 
-        commentString = ''
-
-        for i in range(3,parsedLine.__len__()-2):
-            commentString+=parsedLine[i] + ' '
-
-        newStatement [4] = int(parsedLine[-2][-2])
+        newStatement [4] = int(parsedLine[4][-1])
 #        print(newStatement[4])
 
-        commentString = commentString[1:-3] + ' (-'+newStatement[4].__str__()+'pts)'
+        commentString = parsedLine[3]+' (-'+newStatement[4].__str__()+'pts)'
         newStatement[3] = commentString
 #        print(newStatement[3])
-        newStatement[5] = parsedLine[-1]
+        newStatement[5] = parsedLine[5]
 
 #        print(newStatement.__str__())
         return newStatement
