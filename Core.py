@@ -31,6 +31,7 @@ class AutoGrader:
         self.gF = open(self.Assignment+'Graded.txt','w')
 
 
+        #load in each paper and grade them!
         for file in os.listdir(self.Assignment):
             if file.endswith(".xlsx"):
                 print(self.Assignment+'/'+file.__str__())
@@ -60,7 +61,7 @@ class AutoGrader:
         #If we have at least one sheet, we drop info the grading loop
         if self.asheets.__len__()>0:
             score = 60
-            print(score.__str__())
+            print("score:" + score.__str__())
             try:
                 #for each sheet
                 for sheetNum in range(0,self.aSyntax.__len__()):
@@ -68,38 +69,40 @@ class AutoGrader:
 
                     #Go through each question
                     for qNum in range(0,self.aSyntax[sheetNum].__len__()):
-                        print(qNum.__str__())
+                        #print("Question Number: "+ qNum.__str__())
                         curQ = self.aSyntax[sheetNum][qNum]
-                        print("lol")
+                        print("question: ",curQ)
                         #Check to see if it is a single-condition question, check count if so
                         if curQ.__len__()==1:
-                            print("ayy")
-                            if not self.checkStatement(curQ[0],ws,score):
-                                score-=curQ[4]
-                            print('done')
+                            #print("ayy")
+                            if not self.checkStatement(curQ[0],ws,ws,score):
+                                score-=curQ[0][4]
+                                #print("false")
+
+                            #print('done')
 
                         elif curQ.__len__()>1:
-                            print("ayy")
                             #check each condition, if any fail then we break out of loop and subtract points
                             for i in range(0,curQ.__len__()):
-                                print("ayy2 " + curQ[i].__str__())
+                                print("Current Q: " + curQ[i].__str__())
                                 if not self.checkStatement(curQ[i],ws,ws,score):
-                                    print('done')
+                                    #print('False')
+                                    score-=curQ[0][4]
                                     break
                                 else:
-                                    print('ayeee')
+                                    print('True')
 
             except AttributeError:
                 #self.gF.write('Student left cells blank\n\n\n')
                 print('Student left cells blank')
 
             print('~~~~~~~~~~~~~~')
-            print('Score: ' + score)
+            print('Score: ' + score.__str__())
             print('~~~~~~~~~~~~~~')
 
     #Check for Statement stmt in worksheet ws
     def checkStatement(self, stmt, ws, ws2, score):
-        print("Hi")
+        #print("Checking Statement")
         #parse stmt into useful information
         cellToCheck=stmt[0]
         n=stmt[1]
@@ -107,16 +110,19 @@ class AutoGrader:
         comment=stmt[3]
         pointVal=stmt[4]
         correctAnswer = stmt[5]
-        print(comment)
+        #print("Comment:" +comment)
         #check the workbook for the desired statement count, fail and subtract score if is less
         if ws[cellToCheck].value.upper().count(valToCheck)<n:
+
             self.gF.write(comment)
             #print(comment)
-            score-=pointVal
+            print("Statement less than desired")
             return False
         elif ws2[cellToCheck].value.upper()!=correctAnswer.upper():
             print('Answer Wrong')
+            return False
         else:
+            print("Answer Correct")
             return True
 
     #Read in an assignment key to the self.aSyntax variable
