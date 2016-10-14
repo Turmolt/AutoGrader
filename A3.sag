@@ -2,7 +2,10 @@
 *[A1]_Check1_[IF]_Did not use IF function in cell A1_-3_IF AND
 **[A1]_Check1_[AND]_Did not use AND function in cell A1_-3_IF AND
 [A2]_Check1_[IF]_Did not use nested IF function in cell A2_-3_IF
-*[A3]_Check1_[IF]_Did not use nested IF function in cell A3_-3_IF AND
-**[A3]_Check3_[ALF]_Did not used AND function 3 times in cell A3_-3_IF AND
+*[A3]_Check1_[IF]_Did not use nested IF function in cell A3_-3_IF
+**[A3]_Check3_[ALF]_Did not used AND function 3 times in cell A3_-3_IF
 [L1]_Check1_[COUNTIFS]_Did not use COUNTIF function in cell L1_-3_COUNTIFS
 [K1]_Check1_[$G$9]_Did not use absolute reference to $G$9 in cell K1_-2_$G$9
+*[C1]_Check1_[B1]_Did not calculate the answer correctly in cell C1_-50_1.666
+**[C1]_Check1_[B2]_Did not calculate the answer correctly in cell C1_-50_1.666
+**[C1]_Check1_[B3]_Did not calculate the answer correctly in cell C1_-50_1.666

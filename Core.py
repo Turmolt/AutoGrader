@@ -10,6 +10,7 @@ from openpyxl import load_workbook
 import re
 import os
 import sys
+import math
 
 class AutoGrader:
 
@@ -43,39 +44,45 @@ class AutoGrader:
 
         self.gF.close()
 
-
-
-
     def gradePaper(self,path):
 
         #loading in the excel sheet
         fileName = path.replace(self.Assignment+'/','')
         fileName = fileName.replace('.xlsx','')
         self.gF.write(fileName+'\n')
-        self.awb = load_workbook(path)
-        self.asheets = []
-        for s in self.awb._sheets:
-            self.asheets.append(s)
-#        print('Start')
+ #       print("load wb")
+        awb = load_workbook(path)
+  #      print("load wb2")
+        awb2=load_workbook(path, data_only=True)
+   #     print("done loading wb and wb2")
+        asheets = []
+        asheetsNotFormulas=[]
+        for s in awb._sheets:
+            asheets.append(s)
+        for s in awb2._sheets:
+            asheetsNotFormulas.append(s)
+        print('Start')
 
         #If we have at least one sheet, we drop info the grading loop
-        if self.asheets.__len__()>0:
+        if asheets.__len__()>0:
+            self.gF.write('Number of Sheets: ' + asheets.__len__().__str__()+'\n')
             score = 60
-            print("score:" + score.__str__())
+ #           print("score:" + score.__str__())
             try:
                 #for each sheet
                 for sheetNum in range(0,self.aSyntax.__len__()):
-                    ws=self.asheets[sheetNum]
+                    ws=asheets[sheetNum]
 
+                    ws2=asheetsNotFormulas[sheetNum]
                     #Go through each question
                     for qNum in range(0,self.aSyntax[sheetNum].__len__()):
                         #print("Question Number: "+ qNum.__str__())
                         curQ = self.aSyntax[sheetNum][qNum]
-                        print("question: ",curQ)
+#                        print("question: ",curQ)
                         #Check to see if it is a single-condition question, check count if so
                         if curQ.__len__()==1:
                             #print("ayy")
-                            if not self.checkStatement(curQ[0],ws,ws,score):
+                            if not self.checkStatement(curQ[0],ws,ws2,score,True):
                                 score-=curQ[0][4]
                                 #print("false")
 
@@ -84,24 +91,27 @@ class AutoGrader:
                         elif curQ.__len__()>1:
                             #check each condition, if any fail then we break out of loop and subtract points
                             for i in range(0,curQ.__len__()):
-                                print("Current Q: " + curQ[i].__str__())
-                                if not self.checkStatement(curQ[i],ws,ws,score):
+            #                    print("Current Q: " + curQ[i].__str__())
+                                finalCondition = (i==curQ.__len__()-1)
+                                if not self.checkStatement(curQ[i],ws,ws2,score,finalCondition):
                                     #print('False')
                                     score-=curQ[0][4]
                                     break
                                 else:
-                                    print('True')
+                                    continue
+#                                    print('True')
 
             except AttributeError:
-                #self.gF.write('Student left cells blank\n\n\n')
+                self.gF.write('Student left cells blank\n\n\n')
                 print('Student left cells blank')
 
             print('~~~~~~~~~~~~~~')
             print('Score: ' + score.__str__())
             print('~~~~~~~~~~~~~~')
+            self.gF.write('Score: '+score.__str__()+'\n\n\n')
 
     #Check for Statement stmt in worksheet ws
-    def checkStatement(self, stmt, ws, ws2, score):
+    def checkStatement(self, stmt, ws, ws2, score,finalCondition):
         #print("Checking Statement")
         #parse stmt into useful information
         cellToCheck=stmt[0]
@@ -111,18 +121,41 @@ class AutoGrader:
         pointVal=stmt[4]
         correctAnswer = stmt[5]
         #print("Comment:" +comment)
-        #check the workbook for the desired statement count, fail and subtract score if is less
-        if ws[cellToCheck].value.upper().count(valToCheck)<n:
 
-            self.gF.write(comment)
-            #print(comment)
-            print("Statement less than desired")
+        #check the workbook for the desired statement count, fail and subtract score if is less
+        if str(ws[cellToCheck].value).upper().count(valToCheck)<n:
+
+            self.gF.write(comment+'\n')
+            print(comment)
+            #print("Statement less than desired")
             return False
-        elif ws2[cellToCheck].value.upper()!=correctAnswer.upper():
-            print('Answer Wrong')
+        elif finalCondition and correctAnswer!='XX' and not self.isFloat(ws2[cellToCheck].value) and str(ws2[cellToCheck].value).upper()!=correctAnswer.upper():
+            self.gF.write('Answer did not match correct value in cell '+cellToCheck+' but used the correct formulas (-1pt)\n')
+            print('Answer Wrong Not Decimal')
+            #stmt[4]=1
+
+            score+=4
+            #offsetting the -5 from getting this wrong so its only -1... shuddup
             return False
+        elif finalCondition and correctAnswer!='XX' and self.isFloat(ws2[cellToCheck].value):
+            #if its a decimal we want to shave it off and check the first 6 decimal places
+            ws2float = round(float(ws2[cellToCheck].value),2)
+            correctFloat = round(float(correctAnswer),2)
+#            print(correctFloat.__str__()+" and ws2 is "+ws2float.__str__())
+            if ws2float!=correctFloat:
+                self.gF.write('Answer did not match correct value in cell '+cellToCheck+' but used the correct formulas (-1pt)\n')
+                #stmt[4]=1
+                #offsetting the -5 from getting this wrong so its only -1... shuddup
+                score+=4
+
+                print(correctFloat.__str__()+" and ws2 is "+ws2float.__str__())
+                #print('Answer Wrong')
+                return False
+            else:
+                #print("Answer Correct")
+                return True
         else:
-            print("Answer Correct")
+            #print("Answer Correct")
             return True
 
     #Read in an assignment key to the self.aSyntax variable
@@ -226,7 +259,7 @@ class AutoGrader:
     def readStatement(self,parsedLine):
 
         #This is the structure of our statements
-        #[CellToCheck, operator, ValueToCheckFor, Grader Comment, PointValue]
+        #[CellToCheck, operator, ValueToCheckFor, Grader Comment, PointValue, Correct Answer]
 
         newStatement = ['', #Cell To Check
                         0,  #Operator
@@ -244,19 +277,30 @@ class AutoGrader:
         else:
             print(parsedLine[1])
 
+        #Value To Check For
         newStatement[2] = parsedLine[2][1:-1]
-        #print(newStatement[2])
 
-        newStatement [4] = int(parsedLine[4][-1])
-#        print(newStatement[4])
+        #Point Value
+        newStatement [4] = int(parsedLine[4][1:])
 
+        #the grader's comment
         commentString = parsedLine[3]+' (-'+newStatement[4].__str__()+'pts)'
         newStatement[3] = commentString
-#        print(newStatement[3])
+
+        #correct answer
         newStatement[5] = parsedLine[5]
 
-#        print(newStatement.__str__())
         return newStatement
+
+    def isFloat(self,value):
+        if str(value).upper()=="TRUE" or str(value).upper()=="FALSE":
+            return False
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
 
 AG  = AutoGrader()
 
