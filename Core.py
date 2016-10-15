@@ -65,7 +65,7 @@ class AutoGrader:
 
         #If we have at least one sheet, we drop info the grading loop
         if asheets.__len__()>0:
-            self.gF.write('Number of Sheets: ' + asheets.__len__().__str__()+'\n')
+            #self.gF.write('Number of Sheets: ' + asheets.__len__().__str__()+'\n')
             score = 60
  #           print("score:" + score.__str__())
             try:
