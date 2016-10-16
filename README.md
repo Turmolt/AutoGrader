@@ -11,8 +11,10 @@ Python program which grades Excel homework built by a lazy TA
 =0
 #=0 means the first sheet. 1 means second, think programming counting
 
+#If the operator returns true (i.e. Check1 finds 1 or more of what its looking for), answer is correct
 *[CellToCheck] CheckN [ValueToCheck] (Comment) -PointValue
 #CheckN means to check for count of ValueToCheck >= N in CellToCheck
+#DiscardN means to check for count of ValueToCheck < N in CellToCheck
 
 #* is an optional operator at the start of the line
 #* means that the next statements beginning with ** will be hitting the same problem

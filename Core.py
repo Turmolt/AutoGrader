@@ -49,7 +49,7 @@ class AutoGrader:
         #loading in the excel sheet
         fileName = path.replace(self.Assignment+'/','')
         fileName = fileName.replace('.xlsx','')
-        self.gF.write(fileName+'\n')
+        self.gF.write(fileName+'\n\n')
  #       print("load wb")
         awb = load_workbook(path)
   #      print("load wb2")
@@ -123,40 +123,51 @@ class AutoGrader:
         #print("Comment:" +comment)
 
         #check the workbook for the desired statement count, fail and subtract score if is less
-        if str(ws[cellToCheck].value).upper().count(valToCheck)<n:
+        if(n > 0):
+            if str(ws[cellToCheck].value).upper().count(valToCheck.upper())<n:
 
-            self.gF.write(comment+'\n')
-            print(comment)
-            #print("Statement less than desired")
-            return False
-        elif finalCondition and correctAnswer!='XX' and not self.isFloat(ws2[cellToCheck].value) and str(ws2[cellToCheck].value).upper()!=correctAnswer.upper():
-            self.gF.write('Answer did not match correct value in cell '+cellToCheck+' but used the correct formulas (-1pt)\n')
-            print('Answer Wrong Not Decimal')
-            #stmt[4]=1
-
-            score+=4
-            #offsetting the -5 from getting this wrong so its only -1... shuddup
-            return False
-        elif finalCondition and correctAnswer!='XX' and self.isFloat(ws2[cellToCheck].value):
-            #if its a decimal we want to shave it off and check the first 6 decimal places
-            ws2float = round(float(ws2[cellToCheck].value),2)
-            correctFloat = round(float(correctAnswer),2)
-#            print(correctFloat.__str__()+" and ws2 is "+ws2float.__str__())
-            if ws2float!=correctFloat:
-                self.gF.write('Answer did not match correct value in cell '+cellToCheck+' but used the correct formulas (-1pt)\n')
-                #stmt[4]=1
-                #offsetting the -5 from getting this wrong so its only -1... shuddup
-                score+=4
-
-                print(correctFloat.__str__()+" and ws2 is "+ws2float.__str__())
-                #print('Answer Wrong')
+                self.gF.write(comment+'\n')
+                print(comment)
+                #print("Statement less than desired")
                 return False
+            elif finalCondition and correctAnswer!='XX' and not self.isFloat(ws2[cellToCheck].value) and str(ws2[cellToCheck].value).upper()!=correctAnswer.upper():
+                self.gF.write('Answer did not match correct value in cell '+cellToCheck+' but used the correct formulas (-1pt)\n')
+                print('Answer Wrong Not Decimal')
+                #stmt[4]=1
+
+                score+=4
+                #offsetting the -5 from getting this wrong so its only -1... shuddup
+                return False
+            elif finalCondition and correctAnswer!='XX' and self.isFloat(ws2[cellToCheck].value):
+                #if its a decimal we want to shave it off and check the first 6 decimal places
+                ws2float = round(float(ws2[cellToCheck].value),2)
+                correctFloat = round(float(correctAnswer),2)
+    #            print(correctFloat.__str__()+" and ws2 is "+ws2float.__str__())
+                if ws2float!=correctFloat:
+                    self.gF.write('Answer did not match correct value in cell '+cellToCheck+' but used the correct formulas (-1pt)\n')
+                    #stmt[4]=1
+                    #offsetting the -5 from getting this wrong so its only -1... shuddup
+                    score+=4
+
+                    print(correctFloat.__str__()+" and ws2 is "+ws2float.__str__())
+                    #print('Answer Wrong')
+                    return False
+                else:
+                    #print("Answer Correct")
+                    return True
             else:
                 #print("Answer Correct")
                 return True
         else:
-            #print("Answer Correct")
-            return True
+            print("Discard")
+            if str(ws[cellToCheck].value).upper().count(valToCheck)>=-n:
+
+                self.gF.write(comment+'\n')
+                print(comment)
+                #print("Statement less than desired")
+                return False
+            else:
+                return True
 
     #Read in an assignment key to the self.aSyntax variable
     def readAssignmentKey(self,keyPath):
@@ -270,10 +281,13 @@ class AutoGrader:
         newStatement[0] = parsedLine[0][1:-1]
         #print(newStatement[0])
 
-        #Check operator here
+        ####Check Operator here####
+        #if Check keyword is used, we search for soemthing that will result in a correct answer
         if 'Check' in parsedLine[1]:
             newStatement[1] = int(parsedLine[1][-1])
-        #    print(newStatement[1])
+        #if Discard keyword is used, we search for something that will result in a wrong answer
+        elif 'Discard' in parsedLine[1]:
+            newStatement[1]=-1*int(parsedLine[1][-1])
         else:
             print(parsedLine[1])
 
