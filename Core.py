@@ -25,6 +25,7 @@ class AutoGrader:
 
         self.aSyntax=[]
         self.readAssignmentKey(self.keyFile)
+        self.pointLoss = 0
         for i in range(0, self.aSyntax[0].__len__()):
             print(self.aSyntax[0][i].__str__() + "\n")
 
@@ -83,7 +84,8 @@ class AutoGrader:
                         if curQ.__len__()==1:
                             #print("ayy")
                             if not self.checkStatement(curQ[0],ws,ws2,score,True):
-                                score-=curQ[0][4]
+                                score-=self.pointLoss
+                                print("Losing " + self.pointLoss.__str__()+" points, now at "+score.__str__() + " on question number "+qNum.__str__())
                                 #print("false")
 
                             #print('done')
@@ -95,15 +97,16 @@ class AutoGrader:
                                 finalCondition = (i==curQ.__len__()-1)
                                 if not self.checkStatement(curQ[i],ws,ws2,score,finalCondition):
                                     #print('False')
-                                    score-=curQ[0][4]
+                                    score-=self.pointLoss
+                                    print("Losing " + self.pointLoss.__str__()+" points, now at "+score.__str__() + " on question number "+qNum.__str__())
                                     break
                                 else:
                                     continue
 #                                    print('True')
 
-            except AttributeError:
+            except AttributeError as e:
                 self.gF.write('Student left cells blank\n\n\n')
-                print('Student left cells blank')
+                print('Student left cells blank: '+str(e))
 
             print('~~~~~~~~~~~~~~')
             print('Score: ' + score.__str__())
@@ -120,11 +123,13 @@ class AutoGrader:
         comment=stmt[3]
         pointVal=stmt[4]
         correctAnswer = stmt[5]
+
+        self.pointLoss=pointVal
         #print("Comment:" +comment)
 
         #check the workbook for the desired statement count, fail and subtract score if is less
         if(n > 0):
-            if str(ws[cellToCheck].value).upper().count(valToCheck.upper())<n:
+            if valToCheck.upper()!="XXX" and (str(ws[cellToCheck].value)).upper().count(valToCheck.upper())<n:
 
                 self.gF.write(comment+'\n')
                 print(comment)
@@ -135,7 +140,7 @@ class AutoGrader:
                 print('Answer Wrong Not Decimal')
                 #stmt[4]=1
 
-                score+=4
+                self.pointLoss = 1
                 #offsetting the -5 from getting this wrong so its only -1... shuddup
                 return False
             elif finalCondition and correctAnswer!='XX' and self.isFloat(ws2[cellToCheck].value):
@@ -147,9 +152,9 @@ class AutoGrader:
                     self.gF.write('Answer did not match correct value in cell '+cellToCheck+' but used the correct formulas (-1pt)\n')
                     #stmt[4]=1
                     #offsetting the -5 from getting this wrong so its only -1... shuddup
-                    score+=4
+                    self.pointLoss = 1
 
-                    print(correctFloat.__str__()+" and ws2 is "+ws2float.__str__())
+                    print(correctFloat.__str__()+" and ws2 is "+ws2float.__str__() )
                     #print('Answer Wrong')
                     return False
                 else:
@@ -159,7 +164,6 @@ class AutoGrader:
                 #print("Answer Correct")
                 return True
         else:
-            print("Discard")
             if str(ws[cellToCheck].value).upper().count(valToCheck)>=-n:
 
                 self.gF.write(comment+'\n')
