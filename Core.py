@@ -22,7 +22,7 @@ class AutoGrader:
         #ask for the .sag file that we will parse to get our answer key
         self.keyFile = input('Enter key file name: ') + '.sag'
 
-
+        self.sheetToGradeNum = 0
         self.aSyntax=[]
         self.readAssignmentKey(self.keyFile)
         self.pointLoss = 0
@@ -72,9 +72,9 @@ class AutoGrader:
             try:
                 #for each sheet
                 for sheetNum in range(0,self.aSyntax.__len__()):
-                    ws=asheets[sheetNum]
+                    ws=asheets[self.sheetToGradeNum]
 
-                    ws2=asheetsNotFormulas[sheetNum]
+                    ws2=asheetsNotFormulas[self.sheetToGradeNum]
                     #Go through each question
                     for qNum in range(0,self.aSyntax[sheetNum].__len__()):
                         #print("Question Number: "+ qNum.__str__())
@@ -200,6 +200,8 @@ class AutoGrader:
                     continue
                 elif l[0] == '=':
                     curSheet = int(l[1])
+                    self.sheetToGradeNum=curSheet
+                    curSheet =0
                     self.aSyntax.append([])
                     state = 1
 
