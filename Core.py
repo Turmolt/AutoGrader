@@ -23,11 +23,13 @@ class AutoGrader:
         self.keyFile = input('Enter key file name: ') + '.sag'
 
         self.sheetToGradeNum = 0
+        self.sheetToGradeNumbers=[]
         self.aSyntax=[]
         self.readAssignmentKey(self.keyFile)
         self.pointLoss = 0
-        for i in range(0, self.aSyntax[0].__len__()):
-            print(self.aSyntax[0][i].__str__() + "\n")
+        for x in range(0,self.aSyntax.__len__()):
+            for i in range(0, self.aSyntax[x].__len__()):
+                print(self.aSyntax[x][i].__str__() + "\n")
 
         #gF = Graded File, the file we write the output to
         self.gF = open(self.Assignment+'Graded.txt','w')
@@ -71,7 +73,8 @@ class AutoGrader:
  #           print("score:" + score.__str__())
             try:
                 #for each sheet
-                for sheetNum in range(0,self.aSyntax.__len__()):
+                for sheetNum in range(0,self.sheetToGradeNumbers.__len__()):
+                    self.sheetToGradeNum=self.sheetToGradeNumbers[sheetNum]
                     ws=asheets[self.sheetToGradeNum]
 
                     ws2=asheetsNotFormulas[self.sheetToGradeNum]
@@ -129,14 +132,20 @@ class AutoGrader:
 
         #check the workbook for the desired statement count, fail and subtract score if is less
         if(n > 0):
-            if valToCheck.upper()!="XXX" and (str(ws[cellToCheck].value)).upper().count(valToCheck.upper())<n:
-
+            if valToCheck.upper()=="ANS":
+                self.gF.write(comment+'\n')
+                print(comment)
+                #print("Statement less than desired")
+                return False
+            elif valToCheck.upper()!="XXX" and (str(ws[cellToCheck].value)).upper().count(valToCheck.upper())<n:
+                #print(ws[cellToCheck].value)
+                #print(ws.title)
                 self.gF.write(comment+'\n')
                 print(comment)
                 #print("Statement less than desired")
                 return False
             elif finalCondition and correctAnswer!='XX' and not self.isFloat(ws2[cellToCheck].value) and str(ws2[cellToCheck].value).upper()!=correctAnswer.upper():
-                self.gF.write('Answer did not match correct value in cell '+cellToCheck+' but used the correct formulas (-1pt)\n')
+                self.gF.write('Answer did not match correct value in cell '+cellToCheck+' on sheet ' + ws.title.__str__()+' but used the correct formulas (-1pt)\n')
                 print('Answer Wrong Not Decimal')
                 #stmt[4]=1
 
@@ -149,7 +158,7 @@ class AutoGrader:
                 correctFloat = round(float(correctAnswer),2)
     #            print(correctFloat.__str__()+" and ws2 is "+ws2float.__str__())
                 if ws2float!=correctFloat:
-                    self.gF.write('Answer did not match correct value in cell '+cellToCheck+' but used the correct formulas (-1pt)\n')
+                    self.gF.write('Answer did not match correct value in cell '+cellToCheck+' on sheet ' + ws.title.__str__()+' but used the correct formulas (-1pt)\n')
                     #stmt[4]=1
                     #offsetting the -5 from getting this wrong so its only -1... shuddup
                     self.pointLoss = 1
@@ -199,9 +208,9 @@ class AutoGrader:
                     # Skip Line, continue because this is a comment
                     continue
                 elif l[0] == '=':
-                    curSheet = int(l[1])
                     self.sheetToGradeNum=curSheet
-                    curSheet =0
+                    self.sheetToGradeNumbers.append(int(l[1]))
+                    #curSheet =0
                     self.aSyntax.append([])
                     state = 1
 
@@ -217,6 +226,13 @@ class AutoGrader:
                     state = 2
                 elif l[0] == '#':
                     continue
+                elif l[0]=="=":
+                    curSheet=curSheet+1
+                    self.sheetToGradeNum=int(l[1])
+                    self.sheetToGradeNumbers.append(int(l[1]))
+                    #curSheet =0
+                    self.aSyntax.append([])
+                    state = 1
                 else:
                     print('Error on line '+i.__str__()+'), stuck in state 1')
 
@@ -271,6 +287,7 @@ class AutoGrader:
             #if a multi-condition is the last line of the assignment file
             if i == lines.__len__()-1 and multConditions:
                 self.aSyntax[curSheet].append(newQuestion)
+
 
     #Read a statement from the parsed line in readAssignmentKey
     def readStatement(self,parsedLine):
